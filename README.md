@@ -1,6 +1,6 @@
 # Telegram Analytics Bot
 
-Телеграм-бот на базе Telethon и MongoDB для логирования групповых чатов и управления ими.
+Телеграм-бот на базе python-telegram-bot и MongoDB для логирования групповых чатов и управления ими.
 
 ## Возможности
 - Сбор сообщений из групп и сохранение в MongoDB
@@ -15,23 +15,21 @@
 
 ## Настройка
 1. Создайте бота через @BotFather и отключите режим приватности.
-2. Установите зависимости:
-   ```
-   pip install -r requirements.txt
-   ```
+2. Установите библиотеку `python-telegram-bot` и другие зависимости:
+    ```
+    pip install -r requirements.txt
+    ```
 3. Укажите переменные окружения:
-   ```
-   export API_ID=...
-   export API_HASH=...
-   export BOT_TOKEN=...
-   export MONGO_URI="mongodb://localhost:27017"
-   export ADMIN_IDS="123456789"
-   export OPENAI_API_KEY="sk-..."  # при необходимости сводок
-   ```
+    ```
+    export BOT_TOKEN=...
+    export MONGO_URI="mongodb://localhost:27017"
+    export ADMIN_IDS="123456789"
+    export OPENAI_API_KEY="sk-..."  # при необходимости сводок
+    ```
 4. Запустите бота:
-   ```
-   python bot.py
-   ```
+    ```
+    python bot.py
+    ```
 
 В личном чате с ботом администратор отправляет `/admin` для отображения панели управления. Далее следуйте подсказкам.
 

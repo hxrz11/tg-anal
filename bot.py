@@ -5,6 +5,7 @@ from datetime import datetime
 from telethon import TelegramClient, events, Button
 from motor.motor_asyncio import AsyncIOMotorClient
 from openai import OpenAI
+from telegram.error import TelegramError
 
 API_ID = int(os.environ["API_ID"])
 API_HASH = os.environ["API_HASH"]
@@ -94,22 +95,26 @@ async def callbacks(event):
         await event.edit("Отправьте: summary <chat_id> <YYYY-MM-DD> <YYYY-MM-DD>")
 
 @client.on(events.NewMessage(pattern=r"^send (-?\d+) (.+)$"))
-async def send_message(event):
+async def send_message(event, context):
     if event.sender_id not in ADMIN_IDS:
         return
     chat_id = int(event.pattern_match.group(1))
     text = event.pattern_match.group(2)
-    await client.send_message(chat_id, text)
+    await context.bot.send_message(chat_id, text)
     await event.reply("Отправлено")
 
 @client.on(events.NewMessage(pattern=r"^pin (-?\d+) (.+)$"))
-async def send_and_pin(event):
+async def send_and_pin(event, context):
     if event.sender_id not in ADMIN_IDS:
         return
     chat_id = int(event.pattern_match.group(1))
     text = event.pattern_match.group(2)
-    msg = await client.send_message(chat_id, text)
-    await client.pin_message(chat_id, msg.id, notify=False)
+    msg = await context.bot.send_message(chat_id, text)
+    try:
+        await context.bot.pin_chat_message(chat_id, msg.message_id)
+    except TelegramError:
+        await event.reply("Не удалось закрепить сообщение: требуется статус администратора")
+        return
     await event.reply("Отправлено и закреплено")
 
 @client.on(events.NewMessage(pattern=r"^summary (-?\d+) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})$"))

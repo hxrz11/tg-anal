@@ -1,6 +1,6 @@
 # Telegram Analytics Bot
 
-Телеграм-бот на базе Telethon и MongoDB для логирования групповых чатов и управления ими.
+Телеграм-бот на базе python-telegram-bot и MongoDB для логирования групповых чатов и управления ими.
 
 ## Возможности
 - Сбор сообщений из групп и сохранение в MongoDB
@@ -21,8 +21,6 @@
    ```
 3. Укажите переменные окружения:
    ```
-   export API_ID=...
-   export API_HASH=...
    export BOT_TOKEN=...
    export MONGO_URI="mongodb://localhost:27017"
    export ADMIN_IDS="123456789"

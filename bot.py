@@ -18,6 +18,14 @@ db_client = AsyncIOMotorClient(MONGO_URI)
 db = db_client.tg_anal
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
+
+def format_checklist(items):
+    lines = ["Чеклист:"]
+    for i, item in enumerate(items, 1):
+        mark = "[x]" if item.get("done") else "[ ]"
+        lines.append(f"{i}. {mark} {item['text']}")
+    return "\n".join(lines)
+
 async def summarize_text(text: str) -> str:
     if not openai_client:
         return "OpenAI key not configured"
@@ -118,6 +126,46 @@ async def summary_cmd(event):
         return
     summary = await summarize_text("\n".join(texts))
     await event.reply(summary)
+
+
+@client.on(events.NewMessage(pattern=r"^checklist (-?\d+) (.+)$"))
+async def create_checklist(event):
+    if event.sender_id not in ADMIN_IDS:
+        return
+    chat_id = int(event.pattern_match.group(1))
+    raw = event.pattern_match.group(2)
+    tasks = [t.strip() for t in raw.split(';') if t.strip()]
+    items = [{"text": t, "done": False} for t in tasks]
+    msg = await client.send_message(chat_id, format_checklist(items))
+    await db.checklists.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"chat_id": chat_id, "message_id": msg.id, "items": items}},
+        upsert=True,
+    )
+    await event.reply("Чеклист создан")
+
+
+@client.on(events.NewMessage(pattern=r"^done (\d+)$"))
+async def close_task(event):
+    if event.is_private:
+        return
+    checklist = await db.checklists.find_one({"chat_id": event.chat_id})
+    if not checklist:
+        return
+    idx = int(event.pattern_match.group(1)) - 1
+    if idx < 0 or idx >= len(checklist["items"]):
+        return
+    if checklist["items"][idx].get("done"):
+        return
+    checklist["items"][idx]["done"] = True
+    await db.checklists.update_one(
+        {"_id": checklist["_id"]},
+        {"$set": {"items": checklist["items"]}},
+    )
+    await client.edit_message(
+        event.chat_id, checklist["message_id"], format_checklist(checklist["items"])
+    )
+    await event.reply("Задача закрыта")
 
 print("Bot started")
 client.run_until_disconnected()
